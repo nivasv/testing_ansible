@@ -1,0 +1,27 @@
+---
+- hosts: server
+  tasks:
+ 
+  - name: Add Oracle Java Repository
+    apt_repository: repo='ppa:openjdk-r/ppa' state=present
+
+  - name: Install Java 8
+    apt: pkg=openjdk-8-jdk state=installed update_cache=true
+  
+  - name: Install tomcat
+    apt: pkg=tomcat7 state=installed update_cache=true
+     
+  - name: Copy war file to tomcat
+    copy:
+      src: "/var/lib/jenkins/workspace/petclinic/target/petclinic.war"
+      dest: "/var/lib/tomcat7/webapps/"
+      
+  - name: Set java environment
+    lineinfile:
+     dest=/etc/default/tomcat7 line="JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64" state=present insertafter=EOF create=True
+    notify:
+     - Restart tomcat
+
+  handlers:
+   - name: Restart tomcat
+     service: name=tomcat7 state=started
