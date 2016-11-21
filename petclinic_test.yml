@@ -1,0 +1,23 @@
+---
+- hosts: webservers
+
+  vars_files:
+  - secret
+
+  tasks:
+  - name: Add Java repo
+    apt_repository: repo='ppa:openjdk-r/ppa' state=present
+  - name: Install Java
+    apt: pkg=openjdk-8-jdk state=installed
+  - name: Install Tomcat7
+    apt: pkg=tomcat7 state=installed
+  - name: Deploy the application to tomcat
+    copy: src=/var/lib/jenkins/workspace/petclinic/target/petclinic.war dest=/var/lib/tomcat7/webapps/
+  - name: Set java environment
+    lineinfile: dest=/etc/default/tomcat7 line="JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64" state=present insertafter=EOF create=True
+    notify:
+     - Restart tomcat
+
+  handlers:
+   - name: Restart tomcat
+     service: name=tomcat7 state=started
